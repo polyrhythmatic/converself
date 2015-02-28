@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+
+<head>
+
+    <title>Converself</title>
+    <style>
+    * {
+        margin: 1%;
+        padding: 1%;
+    }
+    body {
+        font: 30px Helvetica;
+    }
+    input {
+        font-size: 30px;
+        width: 100%;
+    }
+    #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+    #messages li {
+        padding: 2px 2px;
+    }
+    #messages li:nth-child(odd) {
+        background: #FFFFFF;
+    }
+    </style>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="API_keys.js"></script>
+
+    <script>
+    var source_text_bot;
+    var source_text_user;
+
+
+    var socket = io();
+    $(window).keydown(function(event) {
+        // User submit message
+        if (event.which === 13) {
+            var msg = $('#m').val();
+            socket.emit('user message', msg);
+            $('#messages').append($('<li>' + msg + '</li>'));
+            $('#m').val('');
+            source_text_user = msg;
+
+
+            // Human text analysis  
+            params = {
+                text: source_text_user,
+                apikey: alchemyapiKey,
+                outputMode: 'json'
+            }
+
+            url = 'http://access.alchemyapi.com/calls/text/TextGetTextSentiment';
+            $.getJSON(url, params, function(data) {
+                var sscore = data.docSentiment.score;
+                var stype = data.docSentiment.type;
+
+                console.log("The user is being   " + stype + "   at approx.   " + sscore);
+            });
+
+
+
+        }
+    });
+    socket.on('bot message', function(msg) {
+        console.log(msg);
+        $('#messages').append($('<li>').text(msg));
+        source_text_bot = msg;
+
+
+
+        // Bot text analysis  
+        params = {
+            text: source_text_bot,
+            apikey: alchemyapiKey,
+            outputMode: 'json'
+        }
+
+        url = 'http://access.alchemyapi.com/calls/text/TextGetTextSentiment';
+        $.getJSON(url, params, function(data) {
+            var sscore = data.docSentiment.score;
+            var stype = data.docSentiment.type;
+
+            console.log("The bot is being   " + stype + "   at approx.   " + sscore);
+        });
+
+    });
+    </script>
+</head>
+
+<body>
+    <ul id='messages'></ul>
+    <input id='m' autocomplete='off' />
+</body>
+
+</html>
